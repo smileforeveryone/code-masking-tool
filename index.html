@@ -5,42 +5,74 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Code Masking Tool</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f4f7f6; }
-        h2 { color: #333; text-align: center; }
-        .container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+        body { font-family: sans-serif; padding: 20px; background-color: #f4f7f6; color: #333; }
+        h2 { text-align: center; margin-bottom: 30px; }
         
-        /* テキストエリアのスタイル */
-        .box { display: flex; flex-direction: column; flex: 1; min-width: 300px; }
-        label { font-weight: bold; margin-bottom: 5px; color: #555; }
-        textarea { 
-            width: 100%; 
-            height: 400px; 
-            padding: 10px; 
-            border: 1px solid #ccc; 
-            border-radius: 4px; 
-            resize: both; /* 右下でサイズ調整可能 */
-            box-sizing: border-box;
+        /* 全体のレイアウト設定 */
+        .container { 
+            display: flex; 
+            gap: 20px; 
+            align-items: flex-start; /* 上揃えにして高さ連動を防ぐ */
+            justify-content: center;
+        }
+        
+        /* 各ボックスの基本設定 */
+        .box, .settings { 
+            display: flex; 
+            flex-direction: column; 
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        /* 中央設定欄のスタイル */
-        .settings { 
-            width: 350px; 
-            background: #fff; 
-            padding: 15px; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        label { font-weight: bold; margin-bottom: 10px; color: #555; display: block; }
+
+        /* テキストエリアの設定 */
+        textarea { 
+            width: 350px; /* 初期幅 */
+            height: 500px; /* 初期高さ */
+            padding: 12px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            resize: both; /* 自由に変更可能 */
+            font-family: monospace; /* コードを見やすく */
+            box-sizing: border-box;
+            min-width: 200px;
+            min-height: 200px;
         }
+
+        /* 中央設定欄の設定 */
+        .settings { 
+            width: 380px; 
+            resize: horizontal; /* 横幅だけ手動で広げられるようにする */
+            overflow: auto; /* resize有効化に必要 */
+            min-width: 300px;
+        }
+
+        /* 置換リストの入力行 */
         .replace-row { display: flex; gap: 5px; margin-bottom: 8px; }
-        .replace-row input { flex: 1; padding: 5px; border: 1px solid #ddd; border-radius: 3px; }
+        .replace-row input { 
+            flex: 1; 
+            padding: 8px; 
+            border: 1px solid #ddd; 
+            border-radius: 3px; 
+            min-width: 0; /* flex内での縮小を許可 */
+        }
         
+        /* ボタン類 */
         .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
-        button { cursor: pointer; padding: 10px; border: none; border-radius: 4px; font-weight: bold; }
+        button { cursor: pointer; padding: 10px; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s; }
         .btn-add { background-color: #6c757d; color: white; }
         .btn-convert { background-color: #28a745; color: white; font-size: 1.1em; }
         .btn-reverse { background-color: #007bff; color: white; }
-        button:hover { opacity: 0.9; }
+        button:hover { opacity: 0.8; transform: translateY(-1px); }
 
-        @media (max-width: 800px) { .container { flex-direction: column; } .settings { width: 100%; } }
+        /* スマホ等の画面用 */
+        @media (max-width: 1100px) { 
+            .container { flex-direction: column; align-items: stretch; } 
+            textarea, .settings { width: 100% !important; }
+        }
     </style>
 </head>
 <body>
@@ -49,26 +81,26 @@
 
 <div class="container">
     <div class="box">
-        <label for="inputCode">元コード / AIの回答</label>
+        <label>▼ 元コード / AIの回答を貼り付け</label>
         <textarea id="inputCode" placeholder="ここにコードを貼り付けてください..."></textarea>
     </div>
 
     <div class="settings">
-        <label>置換リスト</label>
+        <label>⚙ 置換リスト設定</label>
         <div id="replaceList">
             </div>
         <div class="btn-group">
-            <button class="btn-add" onclick="addRow()">＋ 行を追加</button>
-            <button class="btn-convert" onclick="process(false)">一括変換（隠蔽） ▼</button>
-            <button class="btn-reverse" onclick="process(true)">逆変換（復元） ▲</button>
+            <button class="btn-add" onclick="addRow()">＋ 入力行を追加</button>
+            <button class="btn-convert" onclick="process(false)">変換（機密 → ダミー） ▼</button>
+            <button class="btn-reverse" onclick="process(true)">逆変換（ダミー → 本番） ▲</button>
         </div>
-        <p style="font-size: 0.8em; color: #888; margin-top: 10px;">
-            ※「逆変換」は、AIが生成したダミー入りのコードを本来のURL等に戻す際に使用します。
+        <p style="font-size: 0.75rem; color: #777; margin-top: 15px; line-height: 1.4;">
+            ※ 変換リストに基づき、左のテキストを一括置換して右へ出力します。
         </p>
     </div>
 
     <div class="box">
-        <label for="outputCode">変換後コード</label>
+        <label>▼ 変換後のコード</label>
         <textarea id="outputCode" placeholder="結果がここに表示されます..."></textarea>
     </div>
 </div>
@@ -76,21 +108,18 @@
 <script>
     const listContainer = document.getElementById('replaceList');
 
-    // 行を追加する関数
     function addRow(valA = '', valB = '') {
         const div = document.createElement('div');
         div.className = 'replace-row';
         div.innerHTML = `
-            <input type="text" class="key" placeholder="機密(例:URL)" value="${valA}">
-            <input type="text" class="val" placeholder="変換(例:Dummy)" value="${valB}">
+            <input type="text" class="key" placeholder="機密情報" value="${valA}">
+            <input type="text" class="val" placeholder="ダミー" value="${valB}">
         `;
         listContainer.appendChild(div);
     }
 
-    // 初期状態で5行作成
     for(let i=0; i<5; i++) { addRow(); }
 
-    // 置換処理のメインロジック
     function process(isReverse) {
         let text = document.getElementById('inputCode').value;
         const rows = document.querySelectorAll('.replace-row');
@@ -98,12 +127,9 @@
         rows.forEach(row => {
             const key = row.querySelector('.key').value;
             const val = row.querySelector('.val').value;
-
             if (key && val) {
-                // 特殊文字をエスケープして正規表現を作成（グローバル置換用）
                 const search = isReverse ? val : key;
                 const replaceWith = isReverse ? key : val;
-                
                 if (search.trim() !== "") {
                     const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                     const re = new RegExp(escapedSearch, 'g');
@@ -111,7 +137,6 @@
                 }
             }
         });
-
         document.getElementById('outputCode').value = text;
     }
 </script>
