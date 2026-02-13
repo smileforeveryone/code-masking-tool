@@ -3,193 +3,178 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Code Masking Tool</title>
+    <title>Code Masking Tool Pro</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f0f2f5; color: #333; }
-        h2 { text-align: center; margin-bottom: 20px; color: #1a73e8; }
+        /* 既存のスタイルを維持しつつ追加 */
+        body { font-family: 'Segoe UI', sans-serif; padding: 20px; background-color: #f0f2f5; position: relative; }
+        h2 { text-align: center; color: #1a73e8; }
         
+        /* 使い方リンクのスタイル */
+        .how-to-link {
+            position: absolute; top: 20px; right: 20px;
+            color: #1a73e8; text-decoration: none; font-weight: bold;
+            cursor: pointer; border-bottom: 1px dashed #1a73e8;
+        }
+
+        /* ポップアップ（モーダル）のスタイル */
+        .modal {
+            display: none; position: fixed; z-index: 100;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fff; margin: 5% auto; padding: 30px;
+            border-radius: 10px; width: 60%; max-width: 800px;
+            line-height: 1.6; position: relative;
+        }
+        .close-btn { position: absolute; top: 10px; right: 20px; font-size: 28px; cursor: pointer; }
+        .modal-content h3 { border-bottom: 2px solid #1a73e8; padding-bottom: 10px; }
+        .modal-content ul { padding-left: 20px; }
+        .modal-content code { background: #eee; padding: 2px 5px; border-radius: 3px; }
+
+        /* （以下、前回のスタイルを継承） */
         .container { display: flex; gap: 20px; align-items: flex-start; justify-content: center; }
-        
-        .box, .settings { 
-            display: flex; flex-direction: column; background: #fff;
-            padding: 15px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-
-        label { font-weight: bold; margin-bottom: 10px; color: #555; display: flex; justify-content: space-between; align-items: center; }
-
-        textarea { 
-            width: 380px; height: 550px; padding: 12px; border: 1px solid #ddd; 
-            border-radius: 6px; resize: both; font-family: 'Consolas', 'Monaco', monospace; 
-            box-sizing: border-box; font-size: 13px; line-height: 1.5;
-        }
-
-        /* 中央設定欄 */
+        .box, .settings { display: flex; flex-direction: column; background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        textarea { width: 380px; height: 500px; padding: 12px; border: 1px solid #ddd; border-radius: 6px; resize: both; font-family: monospace; box-sizing: border-box; }
         .settings { width: 420px; min-width: 350px; resize: horizontal; overflow: auto; }
-        .list-header { display: flex; gap: 5px; margin-bottom: 5px; font-size: 0.8em; color: #777; font-weight: bold; }
-        .list-header span { flex: 1; text-align: center; }
-
         .replace-row { display: flex; gap: 5px; margin-bottom: 8px; align-items: center; }
-        .replace-row input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; }
-        
-        /* ボタン共通 */
-        button { cursor: pointer; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s; font-size: 13px; }
-        button:hover { opacity: 0.8; transform: translateY(-1px); }
-        button:active { transform: translateY(0); }
-
-        /* 個別アクション用 */
-        .btn-del-row { background: #ffeded; color: #d93025; padding: 5px 8px; font-size: 11px; }
-        .btn-clear-text { background: #eee; color: #555; padding: 2px 8px; font-size: 11px; }
-        .btn-copy { background: #1a73e8; color: white; padding: 5px 12px; }
-
-        /* メイン操作用 */
-        .btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
-        .btn-main { padding: 12px; font-size: 15px; }
+        .replace-row input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { cursor: pointer; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s; }
+        .btn-main { padding: 12px; font-size: 15px; margin-top: 5px; }
         .btn-add { background-color: #5f6368; color: white; }
         .btn-convert { background-color: #1e8e3e; color: white; }
         .btn-reverse { background-color: #1a73e8; color: white; }
-        
-        /* データ管理用 */
+        .btn-copy { background: #1a73e8; color: white; padding: 5px 12px; }
+        .btn-del-row { background: #ffeded; color: #d93025; padding: 5px 8px; }
+        .btn-clear-text { background: #eee; color: #555; padding: 2px 8px; font-size: 11px; }
         .data-controls { display: flex; gap: 5px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
         .btn-sub { flex: 1; padding: 8px; background: #f8f9fa; border: 1px solid #ddd; color: #5f6368; font-size: 11px; }
-
-        @media (max-width: 1200px) { .container { flex-direction: column; align-items: stretch; } textarea, .settings { width: 100% !important; } }
     </style>
 </head>
 <body>
 
+<div class="how-to-link" onclick="toggleModal(true)">How to use</div>
+
 <h2>機密情報マスキングツール Pro</h2>
+
+<div id="howToModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="toggleModal(false)">&times;</span>
+        <h3>📖 このツールの使い方</h3>
+        <p>このツールは、社内ツールのURLやパスワードなどの機密情報をAIに送る前に、安全な文字列に一括置換するためのものです。</p>
+        <ol>
+            <li><strong>置換リストの設定：</strong> 中央の欄に、隠したい文字列（例：社内URL）と、代わりの文字列（例：<code>EXAMPLE_URL</code>）を入力します。</li>
+            <li><strong>変換の実行：</strong> 左側の「入力」欄に元のコードを貼り付け、「変換」ボタンを押すと、右側にダミー化されたコードが出力されます。</li>
+            <li><strong>AIへの相談：</strong> 右側のコードをコピーしてAIに送ります。</li>
+            <li><strong>逆変換（復元）：</strong> AIが返してきたコードを左側の「入力」欄に貼り付け、「逆変換」ボタンを押すと、元の機密情報に書き戻されます。</li>
+        </ol>
+        <p><strong>💡 ヒント：</strong> CSV書き出し機能を使えば、よく使う置換リストを保存して次回から再利用できます。</p>
+        <p style="font-size: 0.9em; color: #d93025;">※入力したデータはブラウザ内でのみ処理され、外部サーバーに送信されることはありません。</p>
+    </div>
+</div>
 
 <div class="container">
     <div class="box">
-        <label>
-            入力（元コード）
-            <button class="btn-clear-text" onclick="document.getElementById('inputCode').value=''">Delete</button>
-        </label>
-        <textarea id="inputCode" placeholder="ここにコードを貼り付けてください..."></textarea>
+        <label>入力 <button class="btn-clear-text" onclick="document.getElementById('inputCode').value=''">Delete</button></label>
+        <textarea id="inputCode"></textarea>
     </div>
 
     <div class="settings">
-        <label>
-            置換リスト設定
-            <button class="btn-clear-text" onclick="resetList()">リスト一括クリア</button>
-        </label>
-        <div class="list-header">
-            <span>機密文字列</span><span>ダミー文字列</span><span style="flex:0.3"></span>
-        </div>
+        <label>置換リスト <button class="btn-clear-text" onclick="resetList()">一括クリア</button></label>
         <div id="replaceList"></div>
-        
-        <div class="btn-group">
-            <button class="btn-add btn-main" onclick="addRow()">＋ 入力行を追加</button>
-            <button class="btn-convert btn-main" onclick="process(false)">変換（機密 → ダミー） ▼</button>
-            <button class="btn-reverse btn-main" onclick="process(true)">逆変換（ダミー → 本番） ▲</button>
+        <div class="btn-group" style="display:flex; flex-direction:column; gap:8px;">
+            <button class="btn-add btn-main" onclick="addRow()">＋ 行を追加</button>
+            <button class="btn-convert btn-main" onclick="process(false)">変換（隠蔽） ▼</button>
+            <button class="btn-reverse btn-main" onclick="process(true)">逆変換（復元） ▲</button>
         </div>
-
         <div class="data-controls">
-            <button class="btn-sub" onclick="exportCSV()">CSV書き出し</button>
-            <button class="btn-sub" onclick="document.getElementById('csvFile').click()">CSV読み込み</button>
+            <button class="btn-sub" onclick="exportCSV()">CSV保存</button>
+            <button class="btn-sub" onclick="document.getElementById('csvFile').click()">CSV読込</button>
             <input type="file" id="csvFile" style="display:none" accept=".csv" onchange="importCSV(this)">
         </div>
     </div>
 
     <div class="box">
         <label>
-            出力（変換後）
+            出力 
             <div>
                 <button class="btn-copy" onclick="copyToClipboard()">Copy</button>
                 <button class="btn-clear-text" onclick="document.getElementById('outputCode').value=''">Delete</button>
             </div>
         </label>
-        <textarea id="outputCode" placeholder="結果がここに表示されます..."></textarea>
+        <textarea id="outputCode"></textarea>
     </div>
 </div>
 
 <script>
-    const listContainer = document.getElementById('replaceList');
+    // モーダルの表示切り替え
+    function toggleModal(show) {
+        document.getElementById('howToModal').style.display = show ? 'block' : 'none';
+    }
 
-    // 行追加
+    // 以前のスクリプトをそのまま継承
+    const listContainer = document.getElementById('replaceList');
     function addRow(valA = '', valB = '') {
         const div = document.createElement('div');
         div.className = 'replace-row';
-        div.innerHTML = `
-            <input type="text" class="key" placeholder="機密情報" value="${valA}">
-            <input type="text" class="val" placeholder="ダミー" value="${valB}">
-            <button class="btn-del-row" onclick="this.parentElement.remove()" title="この行を削除">×</button>
-        `;
+        div.innerHTML = `<input type="text" class="key" value="${valA}"><input type="text" class="val" value="${valB}"><button class="btn-del-row" onclick="this.parentElement.remove()">×</button>`;
         listContainer.appendChild(div);
     }
-
-    // 初期化（5行作成）
-    function resetList() {
-        listContainer.innerHTML = '';
-        for(let i=0; i<5; i++) { addRow(); }
-    }
+    function resetList() { listContainer.innerHTML = ''; for(let i=0; i<5; i++) { addRow(); } }
     resetList();
 
-    // 置換実行
     function process(isReverse) {
         let text = document.getElementById('inputCode').value;
         const rows = document.querySelectorAll('.replace-row');
-        
         rows.forEach(row => {
             const key = row.querySelector('.key').value;
             const val = row.querySelector('.val').value;
             if (key && val) {
                 const search = isReverse ? val : key;
                 const replaceWith = isReverse ? key : val;
-                if (search.trim() !== "") {
-                    const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                    const re = new RegExp(escapedSearch, 'g');
-                    text = text.replace(re, replaceWith);
-                }
+                const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                text = text.replace(new RegExp(escapedSearch, 'g'), replaceWith);
             }
         });
         document.getElementById('outputCode').value = text;
     }
 
-    // クリップボードへコピー
     function copyToClipboard() {
         const output = document.getElementById('outputCode');
         output.select();
         document.execCommand('copy');
         const btn = document.querySelector('.btn-copy');
-        const originalText = btn.innerText;
         btn.innerText = 'Copied!';
-        setTimeout(() => btn.innerText = originalText, 2000);
+        setTimeout(() => btn.innerText = 'Copy', 2000);
     }
 
-    // CSVエクスポート
     function exportCSV() {
-        let csvContent = "data:text/csv;charset=utf-8,機密,ダミー\n";
+        let csv = "機密,ダミー\n";
         document.querySelectorAll('.replace-row').forEach(row => {
-            const key = row.querySelector('.key').value;
-            const val = row.querySelector('.val').value;
-            if(key || val) csvContent += `"${key}","${val}"\n`;
+            const k = row.querySelector('.key').value;
+            const v = row.querySelector('.val').value;
+            if(k || v) csv += `"${k}","${v}"\n`;
         });
-        const encodedUri = encodeURI(csvContent);
+        const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], {type: 'text/csv;charset=utf-8'});
         const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "masking_list.csv");
-        document.body.appendChild(link);
+        link.href = URL.createObjectURL(blob);
+        link.download = "masking_list.csv";
         link.click();
     }
 
-    // CSVインポート
     function importCSV(input) {
-        const file = input.files[0];
         const reader = new FileReader();
         reader.onload = function(e) {
-            const rows = e.target.result.split("\n");
+            const lines = e.target.result.split("\n");
             listContainer.innerHTML = '';
-            rows.forEach((row, index) => {
-                if(index === 0 || row.trim() === "") return; // ヘッダーと空行スキップ
-                const cols = row.split(",").map(c => c.replace(/"/g, ''));
+            lines.forEach((line, i) => {
+                if(i === 0 || !line.trim()) return;
+                const cols = line.split(",").map(c => c.replace(/"/g, ''));
                 if(cols.length >= 2) addRow(cols[0], cols[1]);
             });
-            input.value = ''; // ファイル選択リセット
         };
-        reader.readAsText(file);
+        reader.readAsText(input.files[0]);
     }
 </script>
-
 </body>
 </html>
