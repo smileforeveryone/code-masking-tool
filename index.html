@@ -3,104 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Code Masking Tool</title>
+    <title>Advanced Code Masking Tool</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f4f7f6; color: #333; }
-        h2 { text-align: center; margin-bottom: 30px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f0f2f5; color: #333; }
+        h2 { text-align: center; margin-bottom: 20px; color: #1a73e8; }
         
-        /* 全体のレイアウト設定 */
-        .container { 
-            display: flex; 
-            gap: 20px; 
-            align-items: flex-start; /* 上揃えにして高さ連動を防ぐ */
-            justify-content: center;
-        }
+        .container { display: flex; gap: 20px; align-items: flex-start; justify-content: center; }
         
-        /* 各ボックスの基本設定 */
         .box, .settings { 
-            display: flex; 
-            flex-direction: column; 
-            background: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; background: #fff;
+            padding: 15px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
 
-        label { font-weight: bold; margin-bottom: 10px; color: #555; display: block; }
+        label { font-weight: bold; margin-bottom: 10px; color: #555; display: flex; justify-content: space-between; align-items: center; }
 
-        /* テキストエリアの設定 */
         textarea { 
-            width: 350px; /* 初期幅 */
-            height: 500px; /* 初期高さ */
-            padding: 12px; 
-            border: 1px solid #ccc; 
-            border-radius: 4px; 
-            resize: both; /* 自由に変更可能 */
-            font-family: monospace; /* コードを見やすく */
-            box-sizing: border-box;
-            min-width: 200px;
-            min-height: 200px;
+            width: 380px; height: 550px; padding: 12px; border: 1px solid #ddd; 
+            border-radius: 6px; resize: both; font-family: 'Consolas', 'Monaco', monospace; 
+            box-sizing: border-box; font-size: 13px; line-height: 1.5;
         }
 
-        /* 中央設定欄の設定 */
-        .settings { 
-            width: 380px; 
-            resize: horizontal; /* 横幅だけ手動で広げられるようにする */
-            overflow: auto; /* resize有効化に必要 */
-            min-width: 300px;
-        }
+        /* 中央設定欄 */
+        .settings { width: 420px; min-width: 350px; resize: horizontal; overflow: auto; }
+        .list-header { display: flex; gap: 5px; margin-bottom: 5px; font-size: 0.8em; color: #777; font-weight: bold; }
+        .list-header span { flex: 1; text-align: center; }
 
-        /* 置換リストの入力行 */
-        .replace-row { display: flex; gap: 5px; margin-bottom: 8px; }
-        .replace-row input { 
-            flex: 1; 
-            padding: 8px; 
-            border: 1px solid #ddd; 
-            border-radius: 3px; 
-            min-width: 0; /* flex内での縮小を許可 */
-        }
+        .replace-row { display: flex; gap: 5px; margin-bottom: 8px; align-items: center; }
+        .replace-row input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; }
         
-        /* ボタン類 */
-        .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
-        button { cursor: pointer; padding: 10px; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s; }
-        .btn-add { background-color: #6c757d; color: white; }
-        .btn-convert { background-color: #28a745; color: white; font-size: 1.1em; }
-        .btn-reverse { background-color: #007bff; color: white; }
+        /* ボタン共通 */
+        button { cursor: pointer; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s; font-size: 13px; }
         button:hover { opacity: 0.8; transform: translateY(-1px); }
+        button:active { transform: translateY(0); }
 
-        /* スマホ等の画面用 */
-        @media (max-width: 1100px) { 
-            .container { flex-direction: column; align-items: stretch; } 
-            textarea, .settings { width: 100% !important; }
-        }
+        /* 個別アクション用 */
+        .btn-del-row { background: #ffeded; color: #d93025; padding: 5px 8px; font-size: 11px; }
+        .btn-clear-text { background: #eee; color: #555; padding: 2px 8px; font-size: 11px; }
+        .btn-copy { background: #1a73e8; color: white; padding: 5px 12px; }
+
+        /* メイン操作用 */
+        .btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+        .btn-main { padding: 12px; font-size: 15px; }
+        .btn-add { background-color: #5f6368; color: white; }
+        .btn-convert { background-color: #1e8e3e; color: white; }
+        .btn-reverse { background-color: #1a73e8; color: white; }
+        
+        /* データ管理用 */
+        .data-controls { display: flex; gap: 5px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
+        .btn-sub { flex: 1; padding: 8px; background: #f8f9fa; border: 1px solid #ddd; color: #5f6368; font-size: 11px; }
+
+        @media (max-width: 1200px) { .container { flex-direction: column; align-items: stretch; } textarea, .settings { width: 100% !important; } }
     </style>
 </head>
 <body>
 
-<h2>機密情報マスキングツール</h2>
+<h2>機密情報マスキングツール Pro</h2>
 
 <div class="container">
     <div class="box">
-        <label>▼ 元コード / AIの回答を貼り付け</label>
+        <label>
+            入力（元コード）
+            <button class="btn-clear-text" onclick="document.getElementById('inputCode').value=''">Delete</button>
+        </label>
         <textarea id="inputCode" placeholder="ここにコードを貼り付けてください..."></textarea>
     </div>
 
     <div class="settings">
-        <label>⚙ 置換リスト設定</label>
-        <div id="replaceList">
-            </div>
-        <div class="btn-group">
-            <button class="btn-add" onclick="addRow()">＋ 入力行を追加</button>
-            <button class="btn-convert" onclick="process(false)">変換（機密 → ダミー） ▼</button>
-            <button class="btn-reverse" onclick="process(true)">逆変換（ダミー → 本番） ▲</button>
+        <label>
+            置換リスト設定
+            <button class="btn-clear-text" onclick="resetList()">リスト一括クリア</button>
+        </label>
+        <div class="list-header">
+            <span>機密文字列</span><span>ダミー文字列</span><span style="flex:0.3"></span>
         </div>
-        <p style="font-size: 0.75rem; color: #777; margin-top: 15px; line-height: 1.4;">
-            ※ 変換リストに基づき、左のテキストを一括置換して右へ出力します。
-        </p>
+        <div id="replaceList"></div>
+        
+        <div class="btn-group">
+            <button class="btn-add btn-main" onclick="addRow()">＋ 入力行を追加</button>
+            <button class="btn-convert btn-main" onclick="process(false)">変換（機密 → ダミー） ▼</button>
+            <button class="btn-reverse btn-main" onclick="process(true)">逆変換（ダミー → 本番） ▲</button>
+        </div>
+
+        <div class="data-controls">
+            <button class="btn-sub" onclick="exportCSV()">CSV書き出し</button>
+            <button class="btn-sub" onclick="document.getElementById('csvFile').click()">CSV読み込み</button>
+            <input type="file" id="csvFile" style="display:none" accept=".csv" onchange="importCSV(this)">
+        </div>
     </div>
 
     <div class="box">
-        <label>▼ 変換後のコード</label>
+        <label>
+            出力（変換後）
+            <div>
+                <button class="btn-copy" onclick="copyToClipboard()">Copy</button>
+                <button class="btn-clear-text" onclick="document.getElementById('outputCode').value=''">Delete</button>
+            </div>
+        </label>
         <textarea id="outputCode" placeholder="結果がここに表示されます..."></textarea>
     </div>
 </div>
@@ -108,18 +106,26 @@
 <script>
     const listContainer = document.getElementById('replaceList');
 
+    // 行追加
     function addRow(valA = '', valB = '') {
         const div = document.createElement('div');
         div.className = 'replace-row';
         div.innerHTML = `
             <input type="text" class="key" placeholder="機密情報" value="${valA}">
             <input type="text" class="val" placeholder="ダミー" value="${valB}">
+            <button class="btn-del-row" onclick="this.parentElement.remove()" title="この行を削除">×</button>
         `;
         listContainer.appendChild(div);
     }
 
-    for(let i=0; i<5; i++) { addRow(); }
+    // 初期化（5行作成）
+    function resetList() {
+        listContainer.innerHTML = '';
+        for(let i=0; i<5; i++) { addRow(); }
+    }
+    resetList();
 
+    // 置換実行
     function process(isReverse) {
         let text = document.getElementById('inputCode').value;
         const rows = document.querySelectorAll('.replace-row');
@@ -138,6 +144,50 @@
             }
         });
         document.getElementById('outputCode').value = text;
+    }
+
+    // クリップボードへコピー
+    function copyToClipboard() {
+        const output = document.getElementById('outputCode');
+        output.select();
+        document.execCommand('copy');
+        const btn = document.querySelector('.btn-copy');
+        const originalText = btn.innerText;
+        btn.innerText = 'Copied!';
+        setTimeout(() => btn.innerText = originalText, 2000);
+    }
+
+    // CSVエクスポート
+    function exportCSV() {
+        let csvContent = "data:text/csv;charset=utf-8,機密,ダミー\n";
+        document.querySelectorAll('.replace-row').forEach(row => {
+            const key = row.querySelector('.key').value;
+            const val = row.querySelector('.val').value;
+            if(key || val) csvContent += `"${key}","${val}"\n`;
+        });
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "masking_list.csv");
+        document.body.appendChild(link);
+        link.click();
+    }
+
+    // CSVインポート
+    function importCSV(input) {
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const rows = e.target.result.split("\n");
+            listContainer.innerHTML = '';
+            rows.forEach((row, index) => {
+                if(index === 0 || row.trim() === "") return; // ヘッダーと空行スキップ
+                const cols = row.split(",").map(c => c.replace(/"/g, ''));
+                if(cols.length >= 2) addRow(cols[0], cols[1]);
+            });
+            input.value = ''; // ファイル選択リセット
+        };
+        reader.readAsText(file);
     }
 </script>
 
